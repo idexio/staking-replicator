@@ -14,7 +14,7 @@ export default Object.freeze({
     errorLogPath: env.IDEX_STAKING_ERROR_LOG_PATH || '',
   },
   server: {
-    port: parseInt(env.IDEX_STAKING_SERVER_PORT || '8080', 10),
+    port: parseInt(env.IDEX_STAKING_SERVER_PORT || '8081', 10),
     trueClientIp: env.TRUE_CLIENT_IP || '',
   },
   webSocket: {
