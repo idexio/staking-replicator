@@ -21,21 +21,23 @@ if [[ ! $API_KEY =~ $API_KEY_PATTERN ]]; then
 fi
 
 if [[ -z $IDEX_STAKING_SERVER_PORT ]]; then
-  IDEX_STAKING_SERVER_PORT="8080"
+  IDEX_STAKING_SERVER_PORT="8081"
 fi
 
 STOP_RESULT=`docker stop staking-replicator >/dev/null 2>&1`
 RM_RESULT=`docker rm staking-replicator >/dev/null 2>&1`
 
 RUN_RESULT=`docker run -i -t -d \
+  --user "$(id -u):$(id -g)" \
   --restart=always \
   --name staking-replicator \
   --publish $IDEX_STAKING_SERVER_PORT:$IDEX_STAKING_SERVER_PORT \
   --mount "type=bind,source=$SCRIPTPATH/idex-staking-replicator/conf,destination=/conf/" \
+  --mount "type=bind,source=$SCRIPTPATH/idex-staking-replicator/logs,destination=/logs/" \
   --env API_KEY="$API_KEY" \
-  --env IDEX_STAKING_ACCESS_LOG_PATH=access.log \
-  --env IDEX_STAKING_ACTIVITY_LOG_PATH=activity.log \
-  --env IDEX_STAKING_ERROR_LOG_PATH=errors.log \
+  --env IDEX_STAKING_ACCESS_LOG_PATH=/logs/access.log \
+  --env IDEX_STAKING_ACTIVITY_LOG_PATH=/logs/activity.log \
+  --env IDEX_STAKING_ERROR_LOG_PATH=/logs/errors.log \
   idexio/staking-replicator`
 
 echo "IDEX Staking running as $RUN_RESULT"
