@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "importHelpers": true,
+    "lib": ["es2018", "dom"],
+    // "listEmittedFiles": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noErrorTruncation": true,
+    "outDir": "dist",
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "strict": true,
+    "target": "es5",
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

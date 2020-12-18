@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.idea
+*.log
+data/
+dist/
+node_modules/
+scripts/idex-staking-replicator/conf/config.env
+scripts/idex-staking-replicator/logs/*
+yarn-error.log
+
+test/quick.ts
+# this will be built and updated by the release bot
+# ./API.md
