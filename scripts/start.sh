@@ -21,7 +21,7 @@ if [[ ! $API_KEY =~ $API_KEY_PATTERN ]]; then
 fi
 
 if [[ -z $IDEX_STAKING_SERVER_PORT ]]; then
-  IDEX_STAKING_SERVER_PORT="8080"
+  IDEX_STAKING_SERVER_PORT="8081"
 fi
 
 STOP_RESULT=`docker stop staking-replicator >/dev/null 2>&1`
