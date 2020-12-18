@@ -9,7 +9,7 @@
 
 ## Introduction
 
-IDEX Staking Replicator is software that enables the [IDEX](https://idex.io/) community to stake IDEX tokens, serve parts of the IDEX production infrastructure, and earn fees for participation. Replicator is an all-new, lightweight staking client featuring lower resource requirements and dramatically improved stability. For complete coverage, motivation, and details of operation, see our most recent post on [Replicator Staking](#).
+IDEX Staking Replicator is software that enables the [IDEX](https://idex.io/) community to stake IDEX tokens, serve parts of the IDEX production infrastructure, and earn fees for participation. Replicator is an all-new, lightweight staking client featuring lower resource requirements and dramatically improved stability. For complete coverage, motivation, and details of operation, see our most recent post on [Replicator Staking](https://blog.idex.io/all-posts/replicator-staking-is-now-live).
 
 * To get a Staking Key and get started with Replicator staking, visit the [staking page](https://exchange.idex.io/staking/replicator) in the IDEX web client. All status and earnings information is now available through the web client.
 * For details on implementing an IDEX API consumer that uses Replicators, see the [IDEX API documentation](https://docs.idex.io/#api-replicator).
