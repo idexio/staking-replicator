@@ -98,7 +98,7 @@ The start script will prompt for a Staking Key, which can be found on the [Repli
 
 #### A note on connectivity
 
-In order to serve data to IDEX API users, Replicator must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. Replicator requires public TCP access to port 8080 and has limits on how frequently a node can change IP addresses.
+In order to serve data to IDEX API users, Replicator must be reachable from the public internet. Most home and office connections are not publicly reachable by default, so you may need to take steps like opening up specific ports on your router. Replicator requires public TCP access to port 8081 and has limits on how frequently a node can change IP addresses.
 
 We recommend running Replicator on an always-on, connected machine or a cloud-hosted compute instance.
 
@@ -130,10 +130,10 @@ Replicator includes minimal configuration options by design, but it is possible 
 Settings include:
 ```
 API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-IDEX_STAKING_SERVER_PORT=8080
+IDEX_STAKING_SERVER_PORT=8081
 ```
 * Setting an `API_KEY` makes it unnecessary to supply an Staking Key on start.
-* If port 8080 is unavailable, a custom port may be specified via `IDEX_STAKING_SERVER_PORT`.
+* If port 8081 is unavailable, a custom port may be specified via `IDEX_STAKING_SERVER_PORT`.
 
 ## Getting Help and Reporting Issues
 
