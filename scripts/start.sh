@@ -32,11 +32,10 @@ RUN_RESULT=`docker run -i -t -d \
   --name staking-replicator \
   --publish $IDEX_STAKING_SERVER_PORT:$IDEX_STAKING_SERVER_PORT \
   --mount "type=bind,source=$SCRIPTPATH/idex-staking-replicator/conf,destination=/conf/" \
-  --mount "type=bind,source=$SCRIPTPATH/idex-staking-replicator/logs,destination=/logs/" \
   --env API_KEY="$API_KEY" \
-  --env IDEX_STAKING_ACCESS_LOG_PATH=/logs/access.log \
-  --env IDEX_STAKING_ACTIVITY_LOG_PATH=/logs/activity.log \
-  --env IDEX_STAKING_ERROR_LOG_PATH=/logs/errors.log \
+  --env IDEX_STAKING_ACCESS_LOG_PATH=access.log \
+  --env IDEX_STAKING_ACTIVITY_LOG_PATH=activity.log \
+  --env IDEX_STAKING_ERROR_LOG_PATH=errors.log \
   idexio/staking-replicator`
 
 echo "IDEX Staking running as $RUN_RESULT"
