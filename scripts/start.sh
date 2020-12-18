@@ -11,7 +11,7 @@ mkdir -p "$SCRIPTPATH/idex-staking-replicator/logs"
 echo "Starting IDEX Replicator..."
 
 if [[ -z $API_KEY ]]; then
-  read -p 'API Key: ' API_KEY
+  read -p 'Staking Key: ' API_KEY
 fi
 
 API_KEY_PATTERN='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
