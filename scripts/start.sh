@@ -29,7 +29,7 @@ RM_RESULT=`docker rm staking-replicator >/dev/null 2>&1`
 
 RUN_RESULT=`docker run -i -t -d \
   --user "$(id -u):$(id -g)" \
-  --restart=always \
+  --restart=unless-stopped \
   --name staking-replicator \
   --publish $IDEX_STAKING_SERVER_PORT:$IDEX_STAKING_SERVER_PORT \
   --mount "type=bind,source=$SCRIPTPATH/idex-staking-replicator/conf,destination=/conf/" \
