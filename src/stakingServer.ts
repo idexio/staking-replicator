@@ -210,15 +210,27 @@ export default class StakingServer {
                   limit = newLimit;
                 }
               }
-              const l2 = await this.getOrderBookL2(parsedUrl.query.market);
-              return StakingServer.sendJsonResponse(
-                request,
-                response,
-                JSON.stringify({
-                  asks: l2.asks.slice(0, limit),
-                  bids: l2.bids.slice(0, limit),
-                }),
-              );
+              try {
+                const l2 = await this.getOrderBookL2(parsedUrl.query.market);
+                return StakingServer.sendJsonResponse(
+                  request,
+                  response,
+                  JSON.stringify({
+                    asks: l2.asks.slice(0, limit),
+                    bids: l2.bids.slice(0, limit),
+                  }),
+                );
+              } catch (e) {
+                if (e.response?.data && e.response?.status) {
+                  return StakingServer.sendJsonResponse(
+                    request,
+                    response,
+                    JSON.stringify(e.response.data),
+                    e.response.status,
+                  );
+                }
+                throw e;
+              }
             }
             default:
               return StakingServer.sendJsonResponse(
@@ -331,7 +343,7 @@ export default class StakingServer {
     const acceptEncoding = (request.headers['accept-encoding'] as string) || '';
 
     if (/\bgzip\b/.test(acceptEncoding)) {
-      response.writeHead(200, { 'Content-Encoding': 'gzip' });
+      response.writeHead(statusCode, { 'Content-Encoding': 'gzip' });
       pipeline(Readable.from([payload]), zlib.createGzip(), response, (err) => {
         if (err) {
           response.end();
