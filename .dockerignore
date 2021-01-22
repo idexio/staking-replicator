@@ -1,5 +1,5 @@
-node_modules
 .git
 .github
-assets
 .vscode
+assets
+node_modules
