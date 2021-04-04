@@ -1,6 +1,6 @@
 {
   "name": "@idexio/staking-replicator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "IDEX Replicator Staking Client Node.js",
   "license": "MIT",
   "repository": "git@github.com:idexio/staking-replicator.git",
@@ -19,7 +19,7 @@
     "start": "node -r dotenv/config dist/src/index.js"
   },
   "dependencies": {
-    "@idexio/idex-sdk": "^1.5.1",
+    "@idexio/idex-sdk": "^1.6.2",
     "@sentry/node": "^5.29.0",
     "axios": "^0.21.1",
     "dotenv": "^8.2.0"

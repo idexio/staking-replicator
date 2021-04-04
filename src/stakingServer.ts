@@ -1,4 +1,5 @@
 import * as idex from '@idexio/idex-sdk';
+import { RestPublicClient } from '@idexio/idex-sdk';
 import fs from 'fs';
 import http from 'http';
 import { pipeline, Readable } from 'stream';
@@ -24,7 +25,16 @@ function logApiRequest(
   }
 }
 
+function getOrderBookKey(
+  chain: idex.types.enums.MultiverseChain,
+  market: string,
+): string {
+  return `${chain}.${market}`;
+}
+
 export default class StakingServer {
+  private chains: idex.types.enums.MultiverseChain[];
+
   private readonly l1OrderBooks: Map<
     string,
     idex.RestResponseOrderBookLevel1
@@ -42,22 +52,50 @@ export default class StakingServer {
 
   private readonly marketIsLoading = new Set<string>();
 
-  private readonly publicClient: idex.RestPublicClient;
+  private readonly publicClient: Partial<
+    Record<idex.types.enums.MultiverseChain, RestPublicClient>
+  > = {};
 
   private readonly port: number;
 
   private readonly server: http.Server;
 
-  private webSocketClient: idex.WebSocketClient;
+  private webSocketClient: Partial<
+    Record<idex.types.enums.MultiverseChain, idex.WebSocketClient>
+  > = {};
 
   private readonly webSocketSubscriptions = new Set<string>();
 
   private readonly webSocketTimeouts = new Map<string, NodeJS.Timeout>();
 
   constructor(port: number, sandbox = false) {
-    this.publicClient = new idex.RestPublicClient({
-      sandbox,
-    });
+    this.chains = Object.keys(
+      sandbox ? idex.constants.URLS.sandbox : idex.constants.URLS.production,
+    ) as idex.types.enums.MultiverseChain[];
+
+    for (const multiverseChain of this.chains) {
+      this.publicClient[multiverseChain] = new idex.RestPublicClient({
+        multiverseChain,
+        sandbox,
+      });
+      const wsClient = new idex.WebSocketClient({
+        multiverseChain,
+        sandbox,
+        shouldReconnectAutomatically: true,
+      });
+      this.webSocketClient[multiverseChain] = wsClient;
+      wsClient.onConnect(() => {
+        wsClient.onResponse((response: idex.WebSocketResponse) => {
+          if (response.type === 'l2orderbook') {
+            return this.handleL2OrderBookMessage(
+              multiverseChain,
+              response.data,
+            );
+          }
+        });
+      });
+    }
+
     this.port = port;
     this.server = http.createServer(
       (request: http.IncomingMessage, response: http.ServerResponse) => {
@@ -75,17 +113,6 @@ export default class StakingServer {
         );
       },
     );
-    this.webSocketClient = new idex.WebSocketClient({
-      sandbox,
-      shouldReconnectAutomatically: true,
-    });
-    this.webSocketClient.onConnect(() => {
-      this.webSocketClient.onResponse((response: idex.WebSocketResponse) => {
-        if (response.type === 'l2orderbook') {
-          return this.handleL2OrderBookMessage(response.data);
-        }
-      });
-    });
   }
 
   public async start(): Promise<void> {
@@ -99,12 +126,15 @@ export default class StakingServer {
 
   public stop(): void {
     this.server.close();
-    this.webSocketClient.disconnect();
+    for (const chain of this.chains) {
+      this.webSocketClient[chain]?.disconnect();
+    }
   }
 
   // load an order book that will overlap with queued L2 updates
   // should only run once at a time
   private async loadOrderBookWithMinimumSequence(
+    chain: idex.types.enums.MultiverseChain,
     market: string,
     sequence: number,
   ): Promise<void> {
@@ -112,18 +142,25 @@ export default class StakingServer {
       return;
     }
     this.marketIsLoading.add(market);
-    let book = await this.publicClient.getOrderBookLevel2(market, 1000);
+    const client = this.publicClient[chain];
+    if (!client) {
+      throw new Error(`Unexpected missing public client for ${chain}`);
+    }
+    let book = await client.getOrderBookLevel2(market, 1000);
     while (book.sequence < sequence) {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // eslint-disable-line
-      book = await this.publicClient.getOrderBookLevel2(market, 1000); // eslint-disable-line
+      book = await client.getOrderBookLevel2(market, 1000); // eslint-disable-line
     }
-    this.l2OrderBooks.set(market, book);
-    this.applyOrderBookUpdates(market, book);
-    this.marketIsLoading.delete(market);
+    const key = getOrderBookKey(chain, market);
+
+    this.l2OrderBooks.set(key, book);
+    this.applyOrderBookUpdates(chain, market, book);
+    this.marketIsLoading.delete(key);
   }
 
   // apply L2 updates and update the L1 as well
   private applyOrderBookUpdates(
+    chain: idex.types.enums.MultiverseChain,
     market: string,
     book: idex.RestResponseOrderBookLevel2,
   ): void {
@@ -136,46 +173,69 @@ export default class StakingServer {
         updateL2Levels(book, update);
       }
     }
-    this.l1OrderBooks.set(market, getL1BookFromL2Book(book));
-    this.l2OrderBookUpdates.set(market, []);
+    const key = getOrderBookKey(chain, market);
+
+    this.l1OrderBooks.set(key, getL1BookFromL2Book(book));
+    this.l2OrderBookUpdates.set(key, []);
   }
 
   // queue the L2 updates
   // if order book doesn't exist, start loading it from REST API
   // if order book does exist, then go ahead and apply the updates
   private async handleL2OrderBookMessage(
+    chain: idex.types.enums.MultiverseChain,
     message: idex.WebSocketResponseL2OrderBookLong,
   ): Promise<void> {
+    const key = getOrderBookKey(chain, message.market);
+
     // after we unsubscribe, in-flight messages may still arrive
-    if (!this.webSocketSubscriptions.has(message.market)) {
+    if (!this.webSocketSubscriptions.has(key)) {
       return;
     }
-    const updatesToApply = this.l2OrderBookUpdates.get(message.market) || [];
-    updatesToApply.push(message);
-    this.l2OrderBookUpdates.set(message.market, updatesToApply);
 
-    const l2Book = this.l2OrderBooks.get(message.market);
+    const updatesToApply = this.l2OrderBookUpdates.get(key) || [];
+    updatesToApply.push(message);
+    this.l2OrderBookUpdates.set(key, updatesToApply);
+
+    const l2Book = this.l2OrderBooks.get(key);
     if (!l2Book) {
-      if (!this.marketIsLoading.has(message.market)) {
+      if (!this.marketIsLoading.has(key)) {
         this.loadOrderBookWithMinimumSequence(
+          chain,
           message.market,
           updatesToApply[0].sequence,
         );
       }
       return;
     }
-    this.applyOrderBookUpdates(message.market, l2Book);
+    this.applyOrderBookUpdates(chain, message.market, l2Book);
   }
 
   private async processApiRequest(
     request: http.IncomingMessage,
     response: http.ServerResponse,
   ): Promise<void> {
-    if (!this.webSocketClient.isConnected) {
-      await this.webSocketClient.connect(true);
-    }
     const parsedUrl = url.parse(request.url || '', true);
     const path = parsedUrl.pathname?.toLowerCase() || '/';
+
+    const hasChainParameter = (this.chains as string[]).includes(
+      parsedUrl.query?.chain as string,
+    );
+
+    const chain: idex.types.enums.MultiverseChain = hasChainParameter
+      ? (parsedUrl.query.chain as idex.types.enums.MultiverseChain)
+      : 'eth';
+
+    const wsClient = this.webSocketClient[chain];
+
+    if (!wsClient) {
+      throw new Error(`Unexpected missing ws client for ${chain}`);
+    }
+
+    if (!wsClient.isConnected()) {
+      await wsClient.connect(true);
+    }
+
     try {
       switch (path) {
         case '/health':
@@ -199,7 +259,7 @@ export default class StakingServer {
                 request,
                 response,
                 JSON.stringify(
-                  await this.getOrderBookL1(parsedUrl.query.market),
+                  await this.getOrderBookL1(chain, parsedUrl.query.market),
                 ),
               );
             case '2': {
@@ -211,7 +271,10 @@ export default class StakingServer {
                 }
               }
               try {
-                const l2 = await this.getOrderBookL2(parsedUrl.query.market);
+                const l2 = await this.getOrderBookL2(
+                  chain,
+                  parsedUrl.query.market,
+                );
                 return StakingServer.sendJsonResponse(
                   request,
                   response,
@@ -237,7 +300,7 @@ export default class StakingServer {
                 request,
                 response,
                 JSON.stringify(
-                  await this.getOrderBookL1(parsedUrl.query.market),
+                  await this.getOrderBookL1(chain, parsedUrl.query.market),
                 ),
               );
           }
@@ -254,29 +317,45 @@ export default class StakingServer {
     }
   }
 
-  private refreshWebSocketSubscription(
+  private async refreshWebSocketSubscription(
+    chain: idex.types.enums.MultiverseChain,
     subscription:
       | idex.WebSocketRequestL1OrderBookSubscription
       | idex.WebSocketRequestL2OrderBookSubscription,
-  ): void {
-    console.log(`Refresh WS subscription to ${subscription.markets[0]}`);
-    const market = subscription.markets[0];
-    if (!this.webSocketSubscriptions.has(market)) {
-      this.webSocketClient.subscribe([subscription]);
-      this.webSocketSubscriptions.add(market);
+  ): Promise<void> {
+    logger.info(`Refresh WS subscription to ${subscription.markets[0]}`);
+
+    const wsClient = this.webSocketClient[chain];
+
+    if (!wsClient) {
+      throw new Error(`Unexpected missing ws client for ${chain}`);
     }
-    const existingTimeout = this.webSocketTimeouts.get(market);
+
+    if (!wsClient.isConnected()) {
+      await wsClient.connect(true);
+    }
+
+    const market = subscription.markets[0];
+    const key = getOrderBookKey(chain, market);
+
+    if (!this.webSocketSubscriptions.has(key)) {
+      wsClient.subscribe([subscription]);
+      this.webSocketSubscriptions.add(key);
+    }
+    const existingTimeout = this.webSocketTimeouts.get(key);
     if (existingTimeout) {
       clearTimeout(existingTimeout);
     }
     this.webSocketTimeouts.set(
-      market,
+      key,
       setTimeout(() => {
-        this.webSocketClient.unsubscribe([subscription]);
+        if (wsClient.isConnected()) {
+          wsClient.unsubscribe([subscription]);
+        }
         this.webSocketSubscriptions.delete(market);
         this.l1OrderBooks.delete(market);
         this.l2OrderBooks.delete(market);
-        console.log(`Subscription timeout for ${market}`);
+        logger.info(`Subscription timeout for ${market}`);
       }, config.webSocket.idleTimeout),
     );
   }
@@ -284,12 +363,20 @@ export default class StakingServer {
   // return the L1 order book for market
   // if we don't have it yet, return the public API value immediately and start loading
   private async getOrderBookL1(
+    chain: idex.types.enums.MultiverseChain,
     market: string,
   ): Promise<idex.RestResponseOrderBookLevel1> {
-    let orderBook = this.l1OrderBooks.get(market);
+    const client = this.publicClient[chain];
+    if (!client) {
+      throw new Error(`Unexpected missing public client for ${chain}`);
+    }
+
+    const key = getOrderBookKey(chain, market);
+    let orderBook = this.l1OrderBooks.get(key);
+
     if (!orderBook) {
-      orderBook = await this.publicClient.getOrderBookLevel1(market);
-      this.refreshWebSocketSubscription({
+      orderBook = await client.getOrderBookLevel1(market);
+      this.refreshWebSocketSubscription(chain, {
         name: 'l2orderbook',
         markets: [market],
       });
@@ -300,12 +387,20 @@ export default class StakingServer {
   // return the L2 order book for market
   // if we don't have it yet, return the public API value immediately and start loading
   private async getOrderBookL2(
+    chain: idex.types.enums.MultiverseChain,
     market: string,
   ): Promise<idex.RestResponseOrderBookLevel2> {
-    let orderBook = this.l2OrderBooks.get(market);
+    const client = this.publicClient[chain];
+    if (!client) {
+      throw new Error(`Unexpected missing public client for ${chain}`);
+    }
+
+    const key = getOrderBookKey(chain, market);
+    let orderBook = this.l2OrderBooks.get(key);
+
     if (!orderBook) {
-      orderBook = await this.publicClient.getOrderBookLevel2(market, 1000);
-      this.refreshWebSocketSubscription({
+      orderBook = await client.getOrderBookLevel2(market, 1000);
+      this.refreshWebSocketSubscription(chain, {
         name: 'l2orderbook',
         markets: [market],
       });
@@ -347,7 +442,7 @@ export default class StakingServer {
       pipeline(Readable.from([payload]), zlib.createGzip(), response, (err) => {
         if (err) {
           response.end();
-          console.error('An error occurred send gzip response:', err);
+          logger.error('An error occurred send gzip response:', err);
         }
       });
       return;
