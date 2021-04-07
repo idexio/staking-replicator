@@ -164,7 +164,9 @@ export default class StakingServer {
     market: string,
     book: idex.RestResponseOrderBookLevel2,
   ): void {
-    const updates = this.l2OrderBookUpdates.get(market);
+    const key = getOrderBookKey(chain, market);
+
+    const updates = this.l2OrderBookUpdates.get(key);
     if (!updates) {
       return;
     }
@@ -173,7 +175,6 @@ export default class StakingServer {
         updateL2Levels(book, update);
       }
     }
-    const key = getOrderBookKey(chain, market);
 
     this.l1OrderBooks.set(key, getL1BookFromL2Book(book));
     this.l2OrderBookUpdates.set(key, []);
@@ -209,6 +210,7 @@ export default class StakingServer {
       return;
     }
     this.applyOrderBookUpdates(chain, message.market, l2Book);
+    this.l2OrderBooks.set(key, l2Book);
   }
 
   private async processApiRequest(
@@ -218,96 +220,106 @@ export default class StakingServer {
     const parsedUrl = url.parse(request.url || '', true);
     const path = parsedUrl.pathname?.toLowerCase() || '/';
 
-    const hasChainParameter = (this.chains as string[]).includes(
-      parsedUrl.query?.chain as string,
+    // health check
+    if (path === '/health') {
+      return StakingServer.sendJsonResponse(
+        request,
+        response,
+        JSON.stringify({}),
+      );
+    }
+
+    if (path === '/') {
+      response.statusCode = 200;
+      response.end(
+        'IDEX Replicator\n\nIt works!\n\nYou successfully connected to this replicator, but did not make a valid API request.\n\nReplicator supports the Get Order Books endpoint (https://docs.idex.io/#get-order-books). For example, try /v1/orderbook?market=IDEX-ETH&level=2.',
+      );
+      return;
+    }
+
+    const legacyPath = '/v1/orderbook';
+
+    const orderBookRegEx = new RegExp(
+      `${legacyPath}|/v1/(${this.chains.join('|')})/orderbook`,
+      'i',
     );
 
-    const chain: idex.types.enums.MultiverseChain = hasChainParameter
-      ? (parsedUrl.query.chain as idex.types.enums.MultiverseChain)
-      : 'eth';
-
-    const wsClient = this.webSocketClient[chain];
-
-    if (!wsClient) {
-      throw new Error(`Unexpected missing ws client for ${chain}`);
+    // if not a valid orderbook path, we don't handle it
+    if (orderBookRegEx.test(path) !== true) {
+      return StakingServer.sendHttpError(request, response, 'Not Found', 404);
     }
 
-    if (!wsClient.isConnected()) {
-      await wsClient.connect(true);
-    }
+    const chain: idex.types.enums.MultiverseChain =
+      path === legacyPath
+        ? 'eth'
+        : (path.split('/')[2] as idex.types.enums.MultiverseChain);
 
+    // order book
     try {
-      switch (path) {
-        case '/health':
+      const wsClient = this.webSocketClient[chain];
+
+      if (!wsClient) {
+        throw new Error(`Unexpected missing ws client for ${chain}`);
+      }
+
+      if (!wsClient.isConnected()) {
+        await wsClient.connect(true);
+      }
+
+      if (typeof parsedUrl.query.market !== 'string') {
+        return StakingServer.sendHttpError(
+          request,
+          response,
+          'Bad Request',
+          400,
+        );
+      }
+      switch (parsedUrl.query.level) {
+        case '1':
           return StakingServer.sendJsonResponse(
             request,
             response,
-            JSON.stringify({}),
+            JSON.stringify(
+              await this.getOrderBookL1(chain, parsedUrl.query.market),
+            ),
           );
-        case '/v1/orderbook':
-          if (typeof parsedUrl.query.market !== 'string') {
-            return StakingServer.sendHttpError(
+        case '2': {
+          let limit = 50;
+          if (typeof parsedUrl.query.limit === 'string') {
+            const newLimit = parseInt(parsedUrl.query.limit, 10);
+            if (newLimit > 0 && newLimit <= Number.MAX_SAFE_INTEGER) {
+              limit = newLimit;
+            }
+          }
+          try {
+            const l2 = await this.getOrderBookL2(chain, parsedUrl.query.market);
+            return StakingServer.sendJsonResponse(
               request,
               response,
-              'Bad Request',
-              400,
+              JSON.stringify({
+                asks: l2.asks.slice(0, limit),
+                bids: l2.bids.slice(0, limit),
+              }),
             );
-          }
-          switch (parsedUrl.query.level) {
-            case '1':
+          } catch (e) {
+            if (e.response?.data && e.response?.status) {
               return StakingServer.sendJsonResponse(
                 request,
                 response,
-                JSON.stringify(
-                  await this.getOrderBookL1(chain, parsedUrl.query.market),
-                ),
+                JSON.stringify(e.response.data),
+                e.response.status,
               );
-            case '2': {
-              let limit = 50;
-              if (typeof parsedUrl.query.limit === 'string') {
-                const newLimit = parseInt(parsedUrl.query.limit, 10);
-                if (newLimit > 0 && newLimit <= Number.MAX_SAFE_INTEGER) {
-                  limit = newLimit;
-                }
-              }
-              try {
-                const l2 = await this.getOrderBookL2(
-                  chain,
-                  parsedUrl.query.market,
-                );
-                return StakingServer.sendJsonResponse(
-                  request,
-                  response,
-                  JSON.stringify({
-                    asks: l2.asks.slice(0, limit),
-                    bids: l2.bids.slice(0, limit),
-                  }),
-                );
-              } catch (e) {
-                if (e.response?.data && e.response?.status) {
-                  return StakingServer.sendJsonResponse(
-                    request,
-                    response,
-                    JSON.stringify(e.response.data),
-                    e.response.status,
-                  );
-                }
-                throw e;
-              }
             }
-            default:
-              return StakingServer.sendJsonResponse(
-                request,
-                response,
-                JSON.stringify(
-                  await this.getOrderBookL1(chain, parsedUrl.query.market),
-                ),
-              );
+            throw e;
           }
+        }
         default:
-          response.statusCode = 200;
-          response.end(
-            'IDEX Replicator\n\nIt works!\n\nYou successfully connected to this replicator, but did not make a valid API request.\n\nReplicator supports the Get Order Books endpoint (https://docs.idex.io/#get-order-books). For example, try /v1/orderbook?market=IDEX-ETH&level=2.',
+          return StakingServer.sendJsonResponse(
+            request,
+            response,
+            JSON.stringify(
+              await this.getOrderBookL1(chain, parsedUrl.query.market),
+            ),
           );
       }
     } catch (e) {
@@ -352,9 +364,9 @@ export default class StakingServer {
         if (wsClient.isConnected()) {
           wsClient.unsubscribe([subscription]);
         }
-        this.webSocketSubscriptions.delete(market);
-        this.l1OrderBooks.delete(market);
-        this.l2OrderBooks.delete(market);
+        this.webSocketSubscriptions.delete(key);
+        this.l1OrderBooks.delete(key);
+        this.l2OrderBooks.delete(key);
         logger.info(`Subscription timeout for ${market}`);
       }, config.webSocket.idleTimeout),
     );
@@ -376,11 +388,11 @@ export default class StakingServer {
 
     if (!orderBook) {
       orderBook = await client.getOrderBookLevel1(market);
-      this.refreshWebSocketSubscription(chain, {
-        name: 'l2orderbook',
-        markets: [market],
-      });
     }
+    this.refreshWebSocketSubscription(chain, {
+      name: 'l2orderbook',
+      markets: [market],
+    });
     return orderBook;
   }
 
@@ -400,11 +412,11 @@ export default class StakingServer {
 
     if (!orderBook) {
       orderBook = await client.getOrderBookLevel2(market, 1000);
-      this.refreshWebSocketSubscription(chain, {
-        name: 'l2orderbook',
-        markets: [market],
-      });
     }
+    this.refreshWebSocketSubscription(chain, {
+      name: 'l2orderbook',
+      markets: [market],
+    });
     return orderBook;
   }
 
