@@ -18,7 +18,6 @@ export default Object.freeze({
     trueClientIp: env.TRUE_CLIENT_IP || '',
   },
   webSocket: {
-    host: env.IDEX_WEBSOCKET_API_URL || 'wss://websocket.idex.io/v1',
     idleTimeout: parseInt(env.IDEX_WEBSOCKET_MAX_IDLE || '60000', 10),
   },
 });

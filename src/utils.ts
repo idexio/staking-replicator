@@ -5,7 +5,9 @@ import config from './config';
 import { version } from '../package.json';
 import { KeepAlivePayload } from './types';
 
+// this ain't right
 function updateLevel2Side(
+  isAscending: boolean,
   side: idex.RestResponseOrderBookPriceLevel[],
   updates: idex.RestResponseOrderBookPriceLevel[],
 ): idex.RestResponseOrderBookPriceLevel[] {
@@ -13,24 +15,55 @@ function updateLevel2Side(
   if (!nextUpdate) {
     return side;
   }
-  side.forEach((level: idex.RestResponseOrderBookPriceLevel, index: number) => {
-    if (!nextUpdate) {
-      return;
+
+  const isBefore = function isBefore(
+    a: idex.RestResponseOrderBookPriceLevel,
+    b: idex.RestResponseOrderBookPriceLevel,
+  ): boolean {
+    if (isAscending && a[0] < b[0]) {
+      return true;
     }
-    if (level[0] === nextUpdate[0]) {
-      side[index] = nextUpdate;
+    if (!isAscending && a[0] > b[0]) {
+      return true;
+    }
+    return false;
+  };
+
+  const newLevels: idex.RestResponseOrderBookPriceLevel[] = [];
+
+  side.forEach((level: idex.RestResponseOrderBookPriceLevel) => {
+    // add all new updates before the existing level
+    while (nextUpdate && isBefore(nextUpdate, level)) {
+      newLevels.push(nextUpdate);
       nextUpdate = updates.shift();
     }
+
+    // add either the next update (if overwriting), or the next level
+    if (nextUpdate && level[0] === nextUpdate[0]) {
+      if (parseFloat(nextUpdate[1]) > 0) {
+        newLevels.push(nextUpdate);
+      }
+      nextUpdate = updates.shift();
+    } else {
+      newLevels.push(level);
+    }
   });
-  return side.filter((ask) => parseFloat(ask[1]) > 0);
+
+  // add all updates that go beyond the end
+  while (nextUpdate) {
+    newLevels.push(nextUpdate);
+    nextUpdate = updates.shift();
+  }
+
+  return newLevels;
 }
 
 export const updateL2Levels = function updateL2Levels(
   book: idex.RestResponseOrderBookLevel2,
   updatedLevels: idex.RestResponseOrderBookLevel2,
 ): void {
-  book.asks = updateLevel2Side(book.asks, updatedLevels.asks);
-  book.bids = updateLevel2Side(book.bids, updatedLevels.bids);
+  book.asks = updateLevel2Side(true, book.asks, updatedLevels.asks);
+  book.bids = updateLevel2Side(false, book.bids, updatedLevels.bids);
   book.sequence = updatedLevels.sequence;
 };
 
