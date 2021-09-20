@@ -25,8 +25,8 @@ immediately and replaces IDEXd earning staking credits starting on 2020-12-21 00
 
 ### Staking
 
-In order to participate in the IDEX Replicator staking program, you must have a wallet that holds a minimum of 10,000
-IDEX. There is no incubation period. Any wallet with 10,000 IDEX or more is immediately eligible.
+In order to participate in the IDEX Replicator staking program, you must have a wallet that holds a minimum of 5,000
+IDEX. There is no incubation period. Any wallet with 5,000 IDEX or more is immediately eligible.
 
 ### Hardware / VPS
 
