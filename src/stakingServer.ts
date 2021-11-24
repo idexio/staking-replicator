@@ -251,7 +251,7 @@ export default class StakingServer {
 
     const chain: idex.types.enums.MultiverseChain =
       path === legacyPath
-        ? 'eth'
+        ? 'matic'
         : (path.split('/')[2] as idex.types.enums.MultiverseChain);
 
     // order book

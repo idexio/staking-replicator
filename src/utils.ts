@@ -74,6 +74,7 @@ export const getL1BookFromL2Book = function getL1BookFromL2Book(
     asks: l2.asks.length ? [l2.asks[0]] : [],
     bids: l2.bids.length ? [l2.bids[0]] : [],
     sequence: l2.sequence,
+    pool: l2.pool,
   };
 };
 
