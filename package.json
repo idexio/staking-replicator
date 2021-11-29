@@ -1,6 +1,6 @@
 {
   "name": "@idexio/staking-replicator",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "IDEX Replicator Staking Client Node.js",
   "license": "MIT",
   "repository": "git@github.com:idexio/staking-replicator.git",
