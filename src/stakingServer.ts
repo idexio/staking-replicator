@@ -117,10 +117,10 @@ export default class StakingServer {
     return client;
   }
 
-  private loadOrCreateOrderBookClient(
+  private async loadOrCreateOrderBookClient(
     chain: idex.types.enums.MultiverseChain,
     market: string,
-  ): idex.OrderBookRealTimeClient {
+  ): Promise<idex.OrderBookRealTimeClient> {
     const key = orderBookClientKey(chain, market);
     let client = this.orderBookClient[key];
     if (!client) {
@@ -128,7 +128,7 @@ export default class StakingServer {
         multiverseChain: chain,
         sandbox: this.sandbox,
       });
-      client.start([market]);
+      await client.start([market]);
       this.orderBookClient[key] = client;
     }
     return client;
@@ -224,7 +224,7 @@ export default class StakingServer {
     }
 
     try {
-      const client = this.loadOrCreateOrderBookClient(chain, market);
+      const client = await this.loadOrCreateOrderBookClient(chain, market);
       this.extendOrCreateClientTimeout(chain, market);
       switch (level) {
         case '1':
