@@ -145,8 +145,8 @@ export default class StakingServer {
 
   public stop(): void {
     this.server.close();
-    for (const chain of this.chains) {
-      this.orderBookClient[chain]?.stop();
+    for (const client of Object.values(this.orderBookClient)) {
+      client.stop();
     }
   }
 
