@@ -53,7 +53,7 @@ const keepAliveInterval = setInterval(
   keepAlive,
   config.client.keepAliveTimeout,
 );
-const server = new StakingServer(config.server.port, true);
+const server = new StakingServer(config.server.port);
 server.start().then(() => keepAlive());
 
 process.on('SIGINT', () => {
