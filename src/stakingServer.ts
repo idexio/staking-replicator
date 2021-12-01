@@ -51,14 +51,14 @@ const legacyPath = '/v1/orderbook';
 const marketRegEx = new RegExp('^[a-zA-Z0-9]{1,10}[-][a-zA-Z0-9]{1,10}$', 'i');
 
 function orderBookClientKey(
-  chain: idex.types.enums.MultiverseChain,
+  chain: idex.MultiverseChain,
   market: string,
 ): string {
   return `${chain}::${market}`;
 }
 
 export default class StakingServer {
-  private chains: idex.types.enums.MultiverseChain[];
+  private chains: idex.MultiverseChain[];
 
   private readonly port: number;
 
@@ -75,8 +75,8 @@ export default class StakingServer {
 
   constructor(port: number, sandbox = false) {
     this.chains = Object.keys(
-      sandbox ? idex.constants.URLS.sandbox : idex.constants.URLS.production,
-    ) as idex.types.enums.MultiverseChain[];
+      sandbox ? idex.URLS.sandbox : idex.URLS.production,
+    ) as idex.MultiverseChain[];
     this.port = port;
     this.sandbox = sandbox;
     this.server = http.createServer(
@@ -98,7 +98,7 @@ export default class StakingServer {
   }
 
   private extendOrCreateClientTimeout(
-    chain: idex.types.enums.MultiverseChain,
+    chain: idex.MultiverseChain,
     market: string,
   ): idex.OrderBookRealTimeClient {
     const key = orderBookClientKey(chain, market);
@@ -118,7 +118,7 @@ export default class StakingServer {
   }
 
   private async loadOrCreateOrderBookClient(
-    chain: idex.types.enums.MultiverseChain,
+    chain: idex.MultiverseChain,
     market: string,
   ): Promise<idex.OrderBookRealTimeClient> {
     const key = orderBookClientKey(chain, market);
@@ -196,12 +196,10 @@ export default class StakingServer {
     }
 
     // only valid chains
-    const chain: idex.types.enums.MultiverseChain =
+    const chain: idex.MultiverseChain =
       path === legacyPath
         ? 'matic'
-        : (path
-            .split('/')[2]
-            ?.toLowerCase() as idex.types.enums.MultiverseChain);
+        : (path.split('/')[2]?.toLowerCase() as idex.MultiverseChain);
 
     if (!this.chains.includes(chain)) {
       return StakingServer.sendHttpError(

@@ -377,10 +377,10 @@
     "@ethersproject/properties" "^5.1.0"
     "@ethersproject/strings" "^5.1.0"
 
-"@idexio/idex-sdk@^2.0.0-alpha.20":
-  version "2.0.0-beta.17"
-  resolved "https://registry.yarnpkg.com/@idexio/idex-sdk/-/idex-sdk-2.0.0-beta.17.tgz#0aaf18f1fedd792b2b1399a60ad1db85286c9b04"
-  integrity sha512-VgXBarBlCUGrRI+KaKk5Pc847/3uZ6G16hUnRkcVgFIfHZyqK6NFJ/oJaYXUyiYipGDxn4d0aLgalccnRS7gpQ==
+"@idexio/idex-sdk@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@idexio/idex-sdk/-/idex-sdk-2.0.0.tgz#e9c4a6928aa515d81ae814993d2d22d4e893f78b"
+  integrity sha512-bFPkF+shuBwT28W1mw5+D92R9O4H5cmKu2Kvt8fquzZ45j6JWJyBe80IaIQ72LxUtvN7lfVdnZwJvxTE3dS7yg==
   dependencies:
     axios "^0.21.2"
     bignumber.js "^9.0.1"
@@ -388,6 +388,7 @@
     isomorphic-ws "^4.0.1"
     qs "^6.9.6"
     tslib "^2.1.0"
+    uuid "^8.3.2"
     ws "^7.4.6"
 
 "@nodelib/fs.scandir@2.1.3":
@@ -2888,6 +2889,11 @@ uri-js@^4.2.2:
   integrity sha512-B0yRTzYdUCCn9n+F4+Gh4yIDtMQcaJsmYBDsTSG8g/OejKBodLQ2IHfN3bM7jUsRXndopT7OIXWdYqc1fjmV6g==
   dependencies:
     punycode "^2.1.0"
+
+uuid@^8.3.2:
+  version "8.3.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 v8-compile-cache@^2.0.3:
   version "2.2.0"
