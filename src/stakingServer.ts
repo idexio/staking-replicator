@@ -251,6 +251,7 @@ export default class StakingServer {
               request,
               response,
               JSON.stringify({
+                sequence: l2.sequence,
                 asks: l2.asks.slice(0, limit),
                 bids: l2.bids.slice(0, limit),
               }),
