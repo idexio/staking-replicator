@@ -377,10 +377,10 @@
     "@ethersproject/properties" "^5.1.0"
     "@ethersproject/strings" "^5.1.0"
 
-"@idexio/idex-sdk@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@idexio/idex-sdk/-/idex-sdk-2.0.0.tgz#e9c4a6928aa515d81ae814993d2d22d4e893f78b"
-  integrity sha512-bFPkF+shuBwT28W1mw5+D92R9O4H5cmKu2Kvt8fquzZ45j6JWJyBe80IaIQ72LxUtvN7lfVdnZwJvxTE3dS7yg==
+"@idexio/idex-sdk@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@idexio/idex-sdk/-/idex-sdk-2.1.0.tgz#ff7586f1421c1f81669424ab0725f29d9c9186ab"
+  integrity sha512-FsExdRr+qDjoiY+O57ECxmsYaf2fOKTvFy82JstWxBFsZ5AgHNBPQ2m8/emxsFBT1h3CjsyBp/usRGqlb+7qTg==
   dependencies:
     axios "^0.21.2"
     bignumber.js "^9.0.1"

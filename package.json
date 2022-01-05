@@ -19,7 +19,7 @@
     "start": "node -r dotenv/config dist/src/index.js"
   },
   "dependencies": {
-    "@idexio/idex-sdk": "^2.0.0",
+    "@idexio/idex-sdk": "^2.1.0",
     "@sentry/node": "^5.29.0",
     "axios": "^0.21.1",
     "dotenv": "^8.2.0"

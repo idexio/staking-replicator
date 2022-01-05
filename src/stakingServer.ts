@@ -175,7 +175,7 @@ export default class StakingServer {
     }
 
     const orderBookRegEx = new RegExp(
-      `${legacyPath}|/v1/(${this.chains.join('|')})/orderbook`,
+      `${legacyPath}|/(${this.chains.join('|')})/v1/orderbook`,
       'i',
     );
 
@@ -245,13 +245,18 @@ export default class StakingServer {
               }
             }
             const l2 = await client.getOrderBookL2(market);
+            // between 1 and 500 levels per side
+            const limitPerSide = Math.min(
+              500,
+              Math.max(1, Math.floor(limit / 2)),
+            );
             return StakingServer.sendJsonResponse(
               request,
               response,
               JSON.stringify({
                 ...l2,
-                asks: l2.asks.slice(0, limit),
-                bids: l2.bids.slice(0, limit),
+                asks: l2.asks.slice(0, limitPerSide),
+                bids: l2.bids.slice(0, limitPerSide),
               }),
             );
           } catch (e) {
