@@ -199,7 +199,7 @@ export default class StakingServer {
     const chain: idex.MultiverseChain =
       path === legacyPath
         ? 'matic'
-        : (path.split('/')[2]?.toLowerCase() as idex.MultiverseChain);
+        : (path.split('/')[1]?.toLowerCase() as idex.MultiverseChain);
 
     if (!this.chains.includes(chain)) {
       return StakingServer.sendHttpError(
