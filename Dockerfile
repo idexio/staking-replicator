@@ -1,4 +1,4 @@
-FROM node:14.15.2-alpine AS base
+FROM node:14.15-alpine AS base
 
 COPY . .
 

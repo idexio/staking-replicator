@@ -16,7 +16,7 @@ motivation, and details of operation, see our most recent post on [Replicator St
 
 * To get a Staking Key and get started with Replicator staking, visit the [staking page](https://exchange.idex.io/staking/replicator)
 in the IDEX web client. All status and earnings information is now available through the web client.
-* For details on implementing an IDEX API consumer that uses Replicators, see the [IDEX API documentation](https://docs.idex.io/#api-replicator).
+* For details on implementing an IDEX API consumer that uses Replicators, see the [IDEX API documentation](https://api-docs-v3.idex.io/#api-replicator).
 
 Replicator replaces the legacy [IDEXd staking client](https://github.com/idexio/IDEXd). Replicator is available
 immediately and replaces IDEXd earning staking credits starting on 2020-12-21 00:00 UTC.
