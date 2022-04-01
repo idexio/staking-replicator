@@ -9,6 +9,7 @@ import * as utils from './utils';
 Sentry.init({
   dsn:
     'https://bb760b6bd0f24f6ba4561a5e058ff633@o157426.ingest.sentry.io/5557206',
+  ignoreErrors: ["permission denied, open '/logs/activity.log'"],
 });
 
 console.log('Starting IDEX client');

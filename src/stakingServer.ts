@@ -1,12 +1,10 @@
 import * as idex from '@idexio/idex-sdk';
 import { OrderBookRealTimeClient } from '@idexio/idex-sdk';
 import { AxiosError } from 'axios';
-import fs from 'fs';
 import http from 'http';
 import { pipeline, Readable } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
-import config from './config';
 import { logger } from './logger';
 
 function handleAxiosResponse(
@@ -31,20 +29,14 @@ function isAxiosError(error: any): error is AxiosError {
   return (error as AxiosError).isAxiosError !== undefined;
 }
 
-const logStream = config.logging.accessLogPath
-  ? fs.createWriteStream(config.logging.accessLogPath, { flags: 'a' })
-  : null;
-
 function logApiRequest(
   ip: string,
   path: string,
   status: number,
   bytes: number,
 ): void {
-  if (logStream) {
-    const msg = `${new Date().toUTCString()} ${ip} ${path} ${status} ${bytes}\n`;
-    logStream.write(msg);
-  }
+  const msg = `${new Date().toUTCString()} ${ip} ${path} ${status} ${bytes}\n`;
+  logger.access(msg);
 }
 
 const legacyPath = '/v1/orderbook';
