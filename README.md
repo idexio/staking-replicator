@@ -21,6 +21,29 @@ in the IDEX web client. All status and earnings information is now available thr
 Replicator replaces the legacy [IDEXd staking client](https://github.com/idexio/IDEXd). Replicator is available
 immediately and replaces IDEXd earning staking credits starting on 2020-12-21 00:00 UTC.
 
+## Table of Contents
+
+* [Requirements](#requirements)
+  * [Staking](#staking)
+  * [Hardware / VPS](#hardware--vps)
+  * [Software](#software)
+* [Getting Started](#getting-started)
+  * [A note on users](#a-note-on-users)
+  * [Install Docker](#install-docker)
+  * [Start Replicator](#start-replicator)
+    * [A note on connectivity](#a-note-on-connectivity)
+* [Managing Replicator](#managing-replicator)
+  * [Examining logs](#examining-logs)
+  * [Stopping Replicator](#stopping-replicator)
+  * [Upgrading Replicator](#upgrading-replicator)
+  * [Customizing Replicator's configuration](#customizing-replicators-configuration)
+* [Recommendations](#recommendations)
+  * [Disk space](#disk-space)
+    * [Ubuntu Kernel Updates](#ubuntu-kernel-updates)
+    * [Replicator Updates](#replicator-updates)
+* [Getting Help and Reporting Issues](#getting-help-and-reporting-issues)
+* [License](#license)
+
 ## Requirements
 
 ### Staking
@@ -33,8 +56,8 @@ IDEX. There is no incubation period. Any wallet with 5,000 IDEX or more is immed
 Replicator is designed to run on a computer or inexpensive VPS that is continually connected to the internet with a
 stable IP address and inbound connectivity.
 
-* 1GB+ memory
-* 2GB+ storage
+* 1 GB+ memory
+* 2 GB+ storage
 
 The least expensive tier of many cloud computing providers meets these requirements.
 
@@ -177,6 +200,38 @@ IDEX_STAKING_SERVER_PORT=8081
 
 * Setting an `API_KEY` makes it unnecessary to supply an Staking Key on start.
 * If port 8081 is unavailable, a custom port may be specified via `IDEX_STAKING_SERVER_PORT`.
+
+## Recommendations
+
+### Disk space
+
+Replicator limits the size of the three log files it writes to 50 MB each. No other data is written to disk by
+Replicator itself.
+
+Follow these recommendations to reclaim disk space lost to common causes.
+
+#### Ubuntu Kernel Updates
+
+If you are running Ubuntu (as recommended), automatic kernel updates are likely enabled. These updates leave old kernels
+behind in `/usr/src/`, which can be cleaned up with `sudo apt-get autoremove`. To automate this, set up the following
+cron job:
+
+```
+crontab -e
+```
+
+Add line:
+
+```
+0 0 * * * sudo apt-get -y autoremove
+```
+
+This runs the command every day at midnight.
+
+#### Replicator Updates
+
+Replicator includes an automatic update mechanism, which can leave behind unused Docker images. Unused Docker images
+can be removed by running `docker image prune`.
 
 ## Getting Help and Reporting Issues
 
