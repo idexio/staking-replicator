@@ -54,10 +54,10 @@ IDEX. There is no incubation period. Any wallet with 5,000 IDEX or more is immed
 ### Hardware / VPS
 
 Replicator is designed to run on a computer or inexpensive VPS that is continually connected to the internet with a
-stable IP address and inbound connectivity.
+stable IP address and inbound connectivity. It requires at minimum:
 
-* 1 GB+ memory
-* 2 GB+ storage
+* 1 GB memory
+* 2 GB storage
 
 The least expensive tier of many cloud computing providers meets these requirements.
 
