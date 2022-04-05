@@ -9,6 +9,7 @@ import * as utils from './utils';
 Sentry.init({
   dsn:
     'https://bb760b6bd0f24f6ba4561a5e058ff633@o157426.ingest.sentry.io/5557206',
+  ignoreErrors: ["permission denied, open '/logs/activity.log'"],
 });
 
 console.log('Starting IDEX client');
@@ -25,14 +26,7 @@ const keepAlive = async function keepAlive(): Promise<void> {
   try {
     const url = `${config.idex.stakingCoordinatorUrl}/keepalive`;
     const payload = utils.getKeepAlivePayload();
-    const headers = config.server.trueClientIp
-      ? {
-          'true-client-ip': config.server.trueClientIp,
-        }
-      : {};
-    const stakingResponse = await axios.post(url, payload, {
-      headers,
-    });
+    const stakingResponse = await axios.post(url, payload);
     logger.info(`${stakingResponse.status} ${stakingResponse.statusText}`);
     if (stakingResponse.data) {
       logger.info(stakingResponse.data);

@@ -15,7 +15,6 @@ export default Object.freeze({
   },
   server: {
     port: parseInt(env.IDEX_STAKING_SERVER_PORT || '8081', 10),
-    trueClientIp: env.TRUE_CLIENT_IP || '',
   },
   webSocket: {
     idleTimeout: parseInt(env.IDEX_WEBSOCKET_MAX_IDLE || '60000', 10),

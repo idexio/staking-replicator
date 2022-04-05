@@ -41,7 +41,6 @@ module.exports = {
       },
     ],
     'prettier/prettier': ['error'],
-    quotes: ['error', 'single'],
   },
   plugins: ['import', 'promise', 'prettier', '@typescript-eslint'],
   settings: {
